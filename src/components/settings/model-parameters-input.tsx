@@ -269,19 +269,33 @@ export function ModelParametersInput(
 
   const showSaveButton = parameters.length > 0;
 
-  const getParameterOptions = (excludeParamName?: string) => {
-    const apiParamNames = availableParameters?.parameters
+  const getParameterOptions = (excludeParamName?: string): string[] => {
+    const apiParamNames: string[] = availableParameters?.parameters
       ? Object.keys(availableParameters.parameters)
       : [];
 
-    // Filters out parameters that are already selected by other rows
-    const usedParamNames = parameters
-      .filter(
-        param => param.name !== excludeParamName && param.name.trim() !== ''
-      )
-      .map(param => param.name);
+    // Ensure 'api_base' is always included in the options, with a default schema if not present
+    const paramNames: string[] = apiParamNames.includes('api_base')
+      ? apiParamNames
+      : [...apiParamNames, 'api_base'];
 
-    return apiParamNames.filter(name => !usedParamNames.includes(name));
+    // If 'api_base' is not in available parameters, add a default schema
+    if (availableParameters?.parameters && !availableParameters.parameters['api_base']) {
+      availableParameters.parameters['api_base'] = {
+        type: 'string',
+        description: 'Base URL where LLM requests are sent, used for enterprise proxy gateways.'
+      };
+    }
+
+    // Filters out parameters that are already selected by other rows
+    const usedParamNames: string[] = parameters
+      .filter(
+        (param: ModelParameter) =>
+          param.name !== excludeParamName && param.name.trim() !== ''
+      )
+      .map((param: ModelParameter) => param.name);
+
+    return paramNames.filter((name: string) => !usedParamNames.includes(name));
   };
 
   if (isLoading) {
